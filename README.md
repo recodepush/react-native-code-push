@@ -119,7 +119,7 @@ The simplest way to do this is to "CodePush-ify" your app's root component. To d
   * For class component
 
     ```javascript
-    import codePush from "react-native-code-push";
+    import codePush from "@code-push-next/react-native-code-push";
 
     class MyApp extends Component {
     }
@@ -130,7 +130,7 @@ The simplest way to do this is to "CodePush-ify" your app's root component. To d
   * For functional component
 
     ```javascript
-    import codePush from "react-native-code-push";
+    import codePush from "@code-push-next/react-native-code-push";
 
     let MyApp: () => React$Node = () => {
     }
@@ -145,7 +145,7 @@ The simplest way to do this is to "CodePush-ify" your app's root component. To d
   * For class component
 
     ```javascript
-    import codePush from "react-native-code-push";
+    import codePush from "@code-push-next/react-native-code-push";
 
     @codePush
     class MyApp extends Component {
@@ -155,7 +155,7 @@ The simplest way to do this is to "CodePush-ify" your app's root component. To d
   * For functional component
 
     ```javascript
-    import codePush from "react-native-code-push";
+    import codePush from "@code-push-next/react-native-code-push";
 
     const MyApp: () => React$Node = () => {
     }

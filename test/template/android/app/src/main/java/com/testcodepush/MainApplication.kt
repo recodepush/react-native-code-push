@@ -17,16 +17,14 @@ import com.microsoft.codepush.react.CodePush
 @OptIn(UnstableReactNativeAPI::class)
 class MainApplication : Application(), ReactApplication {
 
-    val defaultPackageList by lazy { 
-      PackageList(this).packages.apply {
-        // Packages that cannot be autolinked yet can be added manually here, for example:
-        // add(MyReactNativePackage())
-      }
-    }
-
     override val reactNativeHost: ReactNativeHost =
       object : DefaultReactNativeHost(this) {
-        override fun getPackages(): List<ReactPackage> = defaultPackageList
+        override fun getPackages(): List<ReactPackage> {
+          val packages = PackageList(this).packages
+          // Packages that cannot be autolinked yet can be added manually here, for example:
+          // packages.add(new MyReactNativePackage());
+          return packages
+        }
       
         override fun getJSMainModuleName(): String = "index"
         override fun getJSBundleFile(): String = CodePush.getJSBundleFile()
