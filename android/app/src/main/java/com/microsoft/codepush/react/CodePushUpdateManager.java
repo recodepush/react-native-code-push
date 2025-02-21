@@ -209,7 +209,7 @@ public class CodePushUpdateManager {
                 progressCallback.call(new DownloadProgress(totalBytes, receivedBytes));
             }
 
-            if (totalBytes != receivedBytes) {
+            if (totalBytes !=-1 && totalBytes != receivedBytes) {
                 throw new CodePushUnknownException("Received " + receivedBytes + " bytes, expected " + totalBytes);
             }
 
