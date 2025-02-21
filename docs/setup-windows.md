@@ -93,7 +93,7 @@ class MainReactNativeHost : ReactNativeHost
     // 3. Update the JavaScriptBundleFile property to initalize the CodePush runtime,
     // specifying the right deployment key, then use it to return the bundle URL from
     // CodePush instead of statically from the binary. If you don't already have your
-    // deployment key, you can run "appcenter codepush deployment list -a <ownerName>/<appName> -k" to retrieve it.
+    // deployment key, you can run "npx @recodepush/cli app ls_deployment -n <AppName> -k (Show deployment key)" to retrieve it.
     protected override string JavaScriptBundleFile
     {
         get

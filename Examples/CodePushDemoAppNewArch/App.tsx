@@ -24,6 +24,7 @@ import {
   LearnMoreLinks,
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
+import CodePush from '@recodepush/react-native-code-push';
 
 type SectionProps = PropsWithChildren<{
   title: string;
@@ -114,5 +115,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
+let codePushOptions = {deploymentKey: 'e3628521-eff8-11ef-be7a-0242ac180005', checkFrequency: CodePush.CheckFrequency.ON_APP_RESUME, installMode: CodePush.InstallMode.IMMEDIATE };
 
-export default App;
+export default CodePush(codePushOptions)(App);

@@ -417,7 +417,7 @@ async function syncInternal(options = {}, syncStatusChangeCallback, downloadProg
 
     syncStatusChangeCallback(CodePush.SyncStatus.CHECKING_FOR_UPDATE);
     const remotePackage = await checkForUpdate(syncOptions.deploymentKey, handleBinaryVersionMismatchCallback);
-
+    console.log("remotePackage", remotePackage);
     const doDownloadAndInstall = async () => {
       syncStatusChangeCallback(CodePush.SyncStatus.DOWNLOADING_PACKAGE);
       const localPackage = await remotePackage.download(downloadProgressCallback);
