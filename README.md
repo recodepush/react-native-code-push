@@ -1,8 +1,8 @@
-#### [Sign up With App Center](https://appcenter.ms/signup?utm_source=CodePush&utm_medium=Azure) to use CodePush
+#### [Sign up With Recodepush](https://recodepush.com) to use CodePush
 
 # React Native Module for CodePush
 
-This plugin provides client-side integration for the [CodePush service](https://microsoft.github.io/code-push/), allowing you to easily add a dynamic update experience to your React Native app(s).
+This plugin provides client-side integration for the [CodePush service](https://recodepush.com), allowing you to easily add a dynamic update experience to your React Native app(s).
 
 <!-- React Native Catalog -->
 
@@ -86,10 +86,10 @@ As new core components are released, which support referencing assets, we'll upd
 
 ## Getting Started
 
-Once you've followed the general-purpose ["getting started"](https://docs.microsoft.com/en-us/appcenter/distribution/codepush/index) instructions for setting up your CodePush account, you can start CodePush-ifying your React Native app by running the following command from within your app's root directory:
+Once you've followed the general-purpose ["getting started"](https://console.recodepush.com/doc) instructions for setting up your CodePush account, you can start CodePush-ifying your React Native app by running the following command from within your app's root directory:
 
 ```shell
-yarn add @code-push-next/react-native-code-push
+yarn add @recodepush/react-native-code-push
 ```
 
 As with all other React Native plugins, the integration experience is different for iOS and Android, so perform the following setup steps depending on which platform(s) you are targeting. Note, if you are targeting both platforms it is recommended to create separate CodePush applications for each platform.
@@ -119,7 +119,7 @@ The simplest way to do this is to "CodePush-ify" your app's root component. To d
   * For class component
 
     ```javascript
-    import codePush from "@code-push-next/react-native-code-push";
+    import codePush from "@recodepush/react-native-code-push";
 
     class MyApp extends Component {
     }
@@ -130,7 +130,7 @@ The simplest way to do this is to "CodePush-ify" your app's root component. To d
   * For functional component
 
     ```javascript
-    import codePush from "@code-push-next/react-native-code-push";
+    import codePush from "@recodepush/react-native-code-push";
 
     let MyApp: () => React$Node = () => {
     }
@@ -145,7 +145,7 @@ The simplest way to do this is to "CodePush-ify" your app's root component. To d
   * For class component
 
     ```javascript
-    import codePush from "@code-push-next/react-native-code-push";
+    import codePush from "@recodepush/react-native-code-push";
 
     @codePush
     class MyApp extends Component {
@@ -155,7 +155,7 @@ The simplest way to do this is to "CodePush-ify" your app's root component. To d
   * For functional component
 
     ```javascript
-    import codePush from "@code-push-next/react-native-code-push";
+    import codePush from "@recodepush/react-native-code-push";
 
     const MyApp: () => React$Node = () => {
     }
@@ -247,22 +247,21 @@ This is not necessarily the case for `updateDialog`, since it won't force the us
 
 ## Releasing Updates
 
-Once your app is configured and distributed to your users, and you have made some JS or asset changes, it's time to release them. The recommended way to release them is using the `release-react` command in the App Center CLI, which will bundle your JavaScript files, asset files, and release the update to the CodePush server.
+Once your app is configured and distributed to your users, and you have made some JS or asset changes, it's time to release them. The recommended way to release them is using the `create_bundle` command in the App Center CLI, which will bundle your JavaScript files, asset files, and release the update to the CodePush server.
 
-*NOTE: Before you can start releasing updates, please log into App Center by running the `appcenter login` command.*
+*NOTE: Before you can start releasing updates, please log into [Recodepush](https://recodepush.com) by running the `npx @recodepush/cli login -u <username> -p <password>` command.*
 
-In its most basic form, this command only requires one parameter: your owner name + "/" + app name.
+In its most basic form, this command only requires some parameters:
 
 ```shell
-appcenter codepush release-react -a <ownerName>/<appName>
+npx @recodepush/cli create_bundle -t <TargetVersion> -n <AppName> -d <deployment>
 
-appcenter codepush release-react -a <ownerName>/MyApp-iOS
-appcenter codepush release-react -a <ownerName>/MyApp-Android
+npx @recodepush/cli create_bundle -t 1.0.0 -n Demo1 -d Staging   
 ```
 
-The `release-react` command enables such a simple workflow because it provides many sensible defaults (like generating a release bundle, assuming your app's entry file on iOS is either `index.ios.js` or `index.js`). However, all of these defaults can be customized to allow incremental flexibility as necessary, which makes it a good fit for most scenarios.
+The `create_bundle` command enables such a simple workflow because it provides many sensible defaults (like generating a release bundle, assuming your app's entry file on iOS is either `index.ios.js` or `index.js`). However, all of these defaults can be customized to allow incremental flexibility as necessary, which makes it a good fit for most scenarios.
 
-```shell
+<!-- ```shell
 # Release a mandatory update with a changelog
 appcenter codepush release-react -a <ownerName>/MyApp-iOS  -m --description "Modified the header color"
 
@@ -277,21 +276,21 @@ appcenter codepush release-react -a <ownerName>/MyApp-Android  --rollout 25 --de
 # limiting the update to exact version name in the build.gradle file
 appcenter codepush release-react -a <ownerName>/MyApp-Android  --target-binary-version "~1.1.0"
 
-```
+``` -->
 
 The CodePush client supports differential updates, so even though you are releasing your JS bundle and assets on every update, your end users will only actually download the files they need. The service handles this automatically so that you can focus on creating awesome apps and we can worry about optimizing end user downloads.
 
-For more details about how the `release-react` command works, as well as the various parameters it exposes, refer to the [CLI docs](https://github.com/microsoft/code-push/tree/v3.0.1/cli#releasing-updates-react-native). Additionally, if you would prefer to handle running the `react-native bundle` command yourself, and therefore, want an even more flexible solution than `release-react`, refer to the [`release` command](https://github.com/microsoft/code-push/tree/v3.0.1/cli#releasing-updates-general) for more details.
+For more details about how the `create_bundle` command works, as well as the various parameters it exposes, refer to the [CLI docs](https://console.recodepush.com/docs). Additionally, if you would prefer to handle running the `react-native bundle` command yourself, and therefore, want an even more flexible solution than `create_bundle`, refer to the [`release` command](https://github.com/microsoft/code-push/tree/v3.0.1/cli#releasing-updates-general) for more details.
 
-If you run into any issues, or have any questions/comments/feedback, you can ping us within the [#code-push](https://discord.gg/0ZcbPKXt5bWxFdFu) channel on Reactiflux, [e-mail us](mailto:codepushfeed@microsoft.com) and/or check out the [troubleshooting](#debugging--troubleshooting) details below.
+If you run into any issues, or have any questions/comments/feedback, you can ping us within [e-mail us](mailto:fresco.company.work@gmail.com) and/or check out the [troubleshooting](#debugging--troubleshooting) details below.
 
 *NOTE: CodePush updates should be tested in modes other than Debug mode. In Debug mode, React Native app always downloads JS bundle generated by packager, so JS bundle downloaded by CodePush does not apply.*
 
-### Multi-Deployment Testing
+<!-- ### Multi-Deployment Testing
 
 In our [getting started](#getting-started) docs, we illustrated how to configure the CodePush plugin using a specific deployment key. However, in order to effectively test your releases, it is critical that you leverage the `Staging` and `Production` deployments that are auto-generated when you first created your CodePush app (or any custom deployments you may have created). This way, you never release an update to your end users that you haven't been able to validate yourself.
 
-*NOTE: Our client-side rollback feature can help unblock users after installing a release that resulted in a crash, and server-side rollbacks (i.e. `appcenter codepush rollback`) allow you to prevent additional users from installing a bad release once it's been identified. However, it's obviously better if you can prevent an erroneous update from being broadly released in the first place.*
+*NOTE: Our client-side rollback feature can help unblock users after installing a release that resulted in a crash, and server-side rollbacks (i.e. `npx @recodepush/cli rollback -n <AppName> -d <deployment> -t <TargetVersion>`) allow you to prevent additional users from installing a bad release once it's been identified. However, it's obviously better if you can prevent an erroneous update from being broadly released in the first place.*
 
 Taking advantage of the `Staging` and `Production` deployments allows you to achieve a workflow like the following (feel free to customize!):
 
@@ -309,7 +308,7 @@ You'll notice that the above steps refer to a "staging build" and "production bu
 
   * [Android](docs/multi-deployment-testing-android.md)
   * [iOS](docs/multi-deployment-testing-ios.md)
-
+ -->
 
 ### Dynamic Deployment Assignment
 
@@ -335,10 +334,11 @@ Since we recommend using the `Staging` deployment for pre-release testing of you
 
 ```javascript
 // #1) Create your new deployment to hold releases of a specific app variant
-appcenter codepush deployment add -a <ownerName>/<appName> test-variant-one
+npx @recodepush/cli app create_deployment -n <AppName> -dn <DeploymentName>
 
 // #2) Target any new releases at that custom deployment
-appcenter codepush release-react -a <ownerName>/<appName> -d test-variant-one
+cd ./root_project
+npx @recodepush/cli create_bundle -t <TargetVersion> -n <AppName> -d <deployment>  --description <*Optional Description>  --disable-minify (*Optional) --bundle-typescript (*Optional) --hermes (*Optional)
 ```
 
 *NOTE: The total user count that is reported in your deployment's "Install Metrics" will take into account users that have "switched" from one deployment to another. For example, if your `Production` deployment currently reports having 1 total user, but you dynamically switch that user to `Staging`, then the `Production` deployment would report 0 total users, while `Staging` would report 1 (the user that just switched). This behavior allows you to accurately track your release adoption, even in the event of using a runtime-based deployment redirection solution.*
@@ -392,7 +392,7 @@ Now you'll be able to see CodePush logs in either debug or release mode, on both
 |-----------------|-------------------|
 | Compilation Error | Double-check that your version of React Native is [compatible](#supported-react-native-platforms) with the CodePush version you are using. |
 | Network timeout / hang when calling `sync` or `checkForUpdate` in the iOS Simulator | Try resetting the simulator by selecting the `Simulator -> Reset Content and Settings..` menu item, and then re-running your app. |
-| Server responds with a `404` when calling `sync` or `checkForUpdate` | Double-check that the deployment key you added to your `Info.plist` (iOS), `build.gradle` (Android) or that you're passing to `sync`/`checkForUpdate`, is in fact correct. You can run `appcenter codepush deployment list <ownerName>/<appName> --displayKeys` to view the correct keys for your app deployments. |
+| Server responds with a `404` when calling `sync` or `checkForUpdate` | Double-check that the deployment key you added to your `Info.plist` (iOS), `build.gradle` (Android) or that you're passing to `sync`/`checkForUpdate`, is in fact correct. You can run `npx @recodepush/cli app ls_deployment -n <AppName> -k (Show deployment key)` to view the correct keys for your app deployments. |
 | Update not being discovered | Double-check that the version of your running app (like `1.0.0`) matches the version you specified when releasing the update to CodePush. Additionally, make sure that you are releasing to the same deployment that your app is configured to sync with. |
 | Update not being displayed after restart | If you're not calling `sync` on app start (like within `componentDidMount` of your root component), then you need to explicitly call `notifyApplicationReady` on app start, otherwise, the plugin will think your update failed and roll it back. |
 | I've released an update for iOS but my Android app also shows an update and it breaks it | Be sure you have different deployment keys for each platform in order to receive updates correctly |

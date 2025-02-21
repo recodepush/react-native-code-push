@@ -1,16 +1,16 @@
 {
-  "name": "@code-push-next/react-native-code-push",
-  "version": "10.0.0-beta.1",
+  "name": "@recodepush/react-native-code-push",
+  "version": "10.0.1",
   "description": "React Native plugin for the CodePush service",
   "main": "CodePush.js",
   "typings": "typings/react-native-code-push.d.ts",
-  "homepage": "https://microsoft.github.io/code-push",
+  "homepage": "https://recodepush.com",
   "keywords": [
     "react-native",
     "code",
     "push"
   ],
-  "author": "Code Push Next",
+  "author": "recodepush.com",
   "license": "MIT",
   "scripts": {
     "clean": "shx rm -rf bin",
@@ -35,7 +35,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/CodePushNext/react-native-code-push"
+    "url": "https://github.com/vokhuyetOz/react-native-code-push"
   },
   "dependencies": {
     "code-push": "4.2.3",
@@ -76,8 +76,8 @@
       ]
     },
     "commands": {
-      "postlink": "node node_modules/@code-push-next/react-native-code-push/scripts/postlink/run",
-      "postunlink": "node node_modules/@code-push-next/react-native-code-push/scripts/postunlink/run"
+      "postlink": "node node_modules/@recodepush/react-native-code-push/scripts/postlink/run",
+      "postunlink": "node node_modules/@recodepush/react-native-code-push/scripts/postunlink/run"
     }
   }
 }
