@@ -176,7 +176,7 @@ class RNIOS extends Platform.IOS implements RNPlatform {
     installPlatform(projectDirectory: string): Q.Promise<void> {
         const iOSProject: string = path.join(projectDirectory, TestConfig.TestAppName, "ios");
         const infoPlistPath: string = path.join(iOSProject, TestConfig.TestAppName, "Info.plist");
-        const appDelegatePath: string = path.join(iOSProject, TestConfig.TestAppName, "AppDelegate.mm");
+        const appDelegatePath: string = path.join(iOSProject, TestConfig.TestAppName, "AppDelegate.swift");
         const podfilePath: string = path.join(iOSProject, "Podfile");
         
 
@@ -199,7 +199,7 @@ class RNIOS extends Platform.IOS implements RNPlatform {
                 "PRODUCT_BUNDLE_IDENTIFIER = [^;]*", "PRODUCT_BUNDLE_IDENTIFIER = \"" + TestConfig.TestNamespace + "\""))
             // Copy the AppDelegate.mm to the project
             .then(TestUtil.copyFile.bind(undefined,
-                path.join(TestConfig.templatePath, "ios", TestConfig.TestAppName, "AppDelegate.mm"),
+                path.join(TestConfig.templatePath, "ios", TestConfig.TestAppName, "AppDelegate.swift"),
                 appDelegatePath, true))
             .then(TestUtil.replaceString.bind(undefined, appDelegatePath, TestUtil.CODE_PUSH_TEST_APP_NAME_PLACEHOLDER, TestConfig.TestAppName));
     }
@@ -309,7 +309,7 @@ class RNProjectManager extends ProjectManager {
         }
         mkdirp.sync(projectDirectory);
 
-        return TestUtil.getProcessOutput("npx @react-native-community/cli init " + appName + " --version 0.76.5 --install-pods", { cwd: projectDirectory, timeout: 30 * 60 * 1000 })
+        return TestUtil.getProcessOutput("npx @react-native-community/cli init " + appName + " --version 0.78.0 --install-pods", { cwd: projectDirectory, timeout: 30 * 60 * 1000 })
             .then((e) => { console.log(`"npx @react-native-community/cli init ${appName}" success. cwd=${projectDirectory}`); return e; })
             .then(this.copyTemplate.bind(this, templatePath, projectDirectory))
             .then<void>(TestUtil.getProcessOutput.bind(undefined, TestConfig.thisPluginInstallString, { cwd: path.join(projectDirectory, TestConfig.TestAppName) }))
