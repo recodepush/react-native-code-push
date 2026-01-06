@@ -134,8 +134,8 @@ class RNAndroid extends Platform.Android implements RNPlatform {
           AndroidManifest,
           'android:allowBackup="true"',
           'android:allowBackup="true"' +
-            "\n\t" +
-            'android:usesCleartextTraffic="true"'
+          "\n\t" +
+          'android:usesCleartextTraffic="true"'
         );
         resolve(null);
       });
@@ -180,55 +180,66 @@ class RNAndroid extends Platform.Android implements RNPlatform {
       );
     }
 
+    /**
+     * Returns whether or not this platform supports diffs.
+     */
+    isDiffsSupported(): boolean {
+      return false;
+    }
+
+    /**
+     * Returns the path to the binary of the given project on this platform.
+     */
+    getBinaryPath(projectDirectory: string): string {
+      return path.join(projectDirectory, TestConfig.TestAppName, "android", "app", "build", "outputs", "apk", "release", "app-release.apk");
+    }
+
+    /**
+     * Installs the platform on the given project.
+     */
+    installPlatform(projectDirectory: string): Q.Promise < void> {
+      const innerprojectDirectory: string = path.join(projectDirectory, TestConfig.TestAppName);
+      const AndroidManifest = path.join(innerprojectDirectory, "android", "app", "src", "main", "AndroidManifest.xml");
+
+      if(TestConfig.isExpoApp) {
+      const androidMainActivityPath = path.join(innerprojectDirectory, "android", "app", "src", "main", "java", "com", "testcodepush", "MainActivity.kt");
+
+      // we use hard-coded deployment key and server url in app.json
+      return Q.Promise<void>((resolve, reject) => {
+        TestUtil.replaceString(androidMainActivityPath, "\"main\"", `"${TestConfig.TestAppName}"`);
+        TestUtil.replaceString(AndroidManifest, "\\${usesCleartextTraffic}", "true");
+        resolve(null);
+      });
+    }
+
+    const gradleContent: string = slash(path.join(innerprojectDirectory, "node_modules", "@code-push-next/react-native-code-push", "android", "codepush.gradle"));
+
+    //// Set up gradle to build CodePush with the app
+    // Add CodePush to android/app/build.gradle
+    const buildGradle = path.join(innerprojectDirectory, "android", "app", "build.gradle");
+
+    TestUtil.replaceString(buildGradle,
+      "apply plugin: \"com.facebook.react\"",
+      "apply plugin: \"com.facebook.react\"\napply from: \"" + gradleContent + "\"");
+
+    // Disable new architecture
+    if (TestConfig.testOldArch) {
+      const gradleProperties = path.join(innerprojectDirectory, "android", "gradle.properties");
+      TestUtil.replaceString(gradleProperties, "newArchEnabled=true", "newArchEnabled=false");
+    }
+
     //// Set the app version to 1.0.0 instead of 1.0
     // Set the app version to 1.0.0 in android/app/build.gradle
-    TestUtil.replaceString(
-      buildGradle,
-      'versionName "1.0"',
-      'versionName "1.0.0"'
-    );
+    TestUtil.replaceString(buildGradle, "versionName \"1.0\"", "versionName \"1.0.0\"");
     // Set the app version to 1.0.0 in AndroidManifest.xml
-    TestUtil.replaceString(
-      path.join(
-        innerprojectDirectory,
-        "android",
-        "app",
-        "src",
-        "main",
-        "AndroidManifest.xml"
-      ),
-      'android:versionName="1.0"',
-      'android:versionName="1.0.0"'
-    );
+    TestUtil.replaceString(path.join(innerprojectDirectory, "android", "app", "src", "main", "AndroidManifest.xml"), "android:versionName=\"1.0\"", "android:versionName=\"1.0.0\"");
 
     //// Replace the MainApplication.java with the correct server url and deployment key
-    const string = path.join(
-      innerprojectDirectory,
-      "android",
-      "app",
-      "src",
-      "main",
-      "res",
-      "values",
-      "strings.xml"
-    );
-    TestUtil.replaceString(
-      string,
-      TestUtil.SERVER_URL_PLACEHOLDER,
-      this.getServerUrl()
-    );
-    TestUtil.replaceString(
-      string,
-      TestUtil.ANDROID_KEY_PLACEHOLDER,
-      this.getDefaultDeploymentKey()
-    );
-    TestUtil.replaceString(
-      AndroidManifest,
-      'android:allowBackup="false"',
-      'android:allowBackup="false"' +
-        "\n\t" +
-        'android:usesCleartextTraffic="true"'
-    );
+    const string = path.join(innerprojectDirectory, "android", "app", "src", "main", "res", "values", "strings.xml");
+    TestUtil.replaceString(string, TestUtil.SERVER_URL_PLACEHOLDER, this.getServerUrl());
+    TestUtil.replaceString(string, TestUtil.ANDROID_KEY_PLACEHOLDER, this.getDefaultDeploymentKey());
+    TestUtil.replaceString(AndroidManifest, "\\${usesCleartextTraffic}", "true");
+
 
     return Q<void>(null);
   }
@@ -237,40 +248,18 @@ class RNAndroid extends Platform.Android implements RNPlatform {
    * Installs the binary of the given project on this platform.
    */
   installApp(projectDirectory: string): Q.Promise<void> {
-    const androidDirectory: string = path.join(
-      projectDirectory,
-      TestConfig.TestAppName,
-      "android"
-    );
-    return TestUtil.getProcessOutput(
-      "adb install -r " + this.getBinaryPath(projectDirectory),
-      { cwd: androidDirectory }
-    ).then(() => {
-      return null;
-    });
+    const androidDirectory: string = path.join(projectDirectory, TestConfig.TestAppName, "android");
+    return TestUtil.getProcessOutput("adb install -r " + this.getBinaryPath(projectDirectory), { cwd: androidDirectory }).then(() => { return null; });
   }
 
-  /**
-   * Build function of the test application, the command depends on the OS
-   */
+  /** 
+   * Build function of the test application, the command depends on the OS 
+  */
   buildFunction(androidDirectory: string): Q.Promise<void> {
-    const gradlewCommand =
-      process.platform === "darwin" || process.platform === "linux"
-        ? "./gradlew"
-        : "gradlew";
-    return TestUtil.getProcessOutput(`${gradlewCommand} clean`, {
-      noLogStdOut: true,
-      cwd: androidDirectory,
-    })
-      .then(() =>
-        TestUtil.getProcessOutput(
-          `${gradlewCommand} assembleRelease --daemon`,
-          { noLogStdOut: true, cwd: androidDirectory }
-        )
-      )
-      .then(() => {
-        return null;
-      });
+    const gradlewCommand = process.platform === "darwin" || process.platform === "linux" ? "./gradlew" : "gradlew";
+    return TestUtil.getProcessOutput(`${gradlewCommand} clean`, { noLogStdOut: true, cwd: androidDirectory })
+      .then(() => TestUtil.getProcessOutput(`${gradlewCommand} assembleRelease --daemon`, { noLogStdOut: true, cwd: androidDirectory }))
+      .then(() => { return null; });
   }
 
   /**
@@ -278,11 +267,7 @@ class RNAndroid extends Platform.Android implements RNPlatform {
    */
   buildApp(projectDirectory: string): Q.Promise<void> {
     // In order to run on Android without the package manager, we must create a release APK and then sign it with the debug certificate.
-    const androidDirectory: string = path.join(
-      projectDirectory,
-      TestConfig.TestAppName,
-      "android"
-    );
+    const androidDirectory: string = path.join(projectDirectory, TestConfig.TestAppName, "android");
     // If the build fails for the first time, try  rebuild app again
     try {
       return this.buildFunction(androidDirectory);
@@ -290,6 +275,7 @@ class RNAndroid extends Platform.Android implements RNPlatform {
       return this.buildFunction(androidDirectory);
     }
   }
+}
 }
 
 class RNIOS extends Platform.IOS implements RNPlatform {
@@ -368,8 +354,7 @@ class RNIOS extends Platform.IOS implements RNPlatform {
         )
           .then(() =>
             TestUtil.getProcessOutput(
-              `RCT_NEW_ARCH_ENABLED=${
-                TestConfig.testOldArch ? 0 : 1
+              `RCT_NEW_ARCH_ENABLED=${TestConfig.testOldArch ? 0 : 1
               } pod install`,
               { cwd: iOSProject }
             )
@@ -381,10 +366,10 @@ class RNIOS extends Platform.IOS implements RNPlatform {
               infoPlistPath,
               "</dict>\n</plist>",
               "<key>CodePushDeploymentKey</key>\n\t<string>" +
-                this.getDefaultDeploymentKey() +
-                "</string>\n\t<key>CodePushServerURL</key>\n\t<string>" +
-                this.getServerUrl() +
-                "</string>\n\t</dict>\n</plist>"
+              this.getDefaultDeploymentKey() +
+              "</string>\n\t<key>CodePushServerURL</key>\n\t<string>" +
+              this.getServerUrl() +
+              "</string>\n\t</dict>\n</plist>"
             )
           )
           // Set the app version to 1.0.0 instead of 1.0 in the Info.plist
@@ -491,29 +476,81 @@ class RNIOS extends Platform.IOS implements RNPlatform {
       "ios"
     );
 
-    return this.getEmulatorManager()
-      .getTargetEmulator()
+    /**
+     * Installs the platform on the given project.
+     */
+    installPlatform(projectDirectory: string): Q.Promise < void> {
+      const iOSProject: string = path.join(projectDirectory, TestConfig.TestAppName, "ios");
+      const infoPlistPath: string = path.join(iOSProject, TestConfig.TestAppName, "Info.plist");
+      const appDelegatePath: string = path.join(iOSProject, TestConfig.TestAppName, "AppDelegate.swift");
+      const podfilePath: string = path.join(iOSProject, "Podfile");
+
+      if(TestConfig.isExpoApp) {
+      // we use hard-coded deployment key and server url in app.json
+      return Q.Promise<void>((resolve, reject) => {
+        TestUtil.replaceString(appDelegatePath, "\"main\"", `"${TestConfig.TestAppName}"`);
+        resolve(null);
+      });
+    } else {
+      // Install the Podfile
+      return TestUtil.copyFile(path.join(TestConfig.templatePath, "ios", "Podfile"), podfilePath, true)
+        .then(() => TestUtil.getProcessOutput(`RCT_NEW_ARCH_ENABLED=${TestConfig.testOldArch ? 0 : 1} pod install`, { cwd: iOSProject }))
+        // Put the IOS deployment key in the Info.plist
+        .then(TestUtil.replaceString.bind(undefined, infoPlistPath,
+          "</dict>\n</plist>",
+          "<key>CodePushDeploymentKey</key>\n\t<string>" + this.getDefaultDeploymentKey() + "</string>\n\t<key>CodePushServerURL</key>\n\t<string>" + this.getServerUrl() + "</string>\n\t</dict>\n</plist>"))
+        // Set the app version to 1.0.0 instead of 1.0 in the Info.plist
+        .then(TestUtil.replaceString.bind(undefined, infoPlistPath, "1.0", "1.0.0"))
+        // Remove dependence of CFBundleShortVersionString from project.pbxproj
+        .then(TestUtil.replaceString.bind(undefined, infoPlistPath, "\\$\\(MARKETING_VERSION\\)", "1.0.0"))
+        // Fix the linker flag list in project.pbxproj (pod install adds an extra comma)
+        .then(TestUtil.replaceString.bind(undefined, path.join(iOSProject, TestConfig.TestAppName + ".xcodeproj", "project.pbxproj"),
+          "\"[$][(]inherited[)]\",\\s*[)];", "\"$(inherited)\"\n\t\t\t\t);"))
+        // Add the correct bundle identifier
+        .then(TestUtil.replaceString.bind(undefined, path.join(iOSProject, TestConfig.TestAppName + ".xcodeproj", "project.pbxproj"),
+          "PRODUCT_BUNDLE_IDENTIFIER = [^;]*", "PRODUCT_BUNDLE_IDENTIFIER = \"" + TestConfig.TestNamespace + "\""))
+        // Copy the AppDelegate.mm to the project
+        .then(TestUtil.copyFile.bind(undefined,
+          path.join(TestConfig.templatePath, "ios", TestConfig.TestAppName, "AppDelegate.swift"),
+          appDelegatePath, true))
+        .then(TestUtil.replaceString.bind(undefined, appDelegatePath, TestUtil.CODE_PUSH_TEST_APP_NAME_PLACEHOLDER, TestConfig.TestAppName));
+    }
+
+  }
+
+  /**
+   * Installs the binary of the given project on this platform.
+   */
+  installApp(projectDirectory: string): Q.Promise<void> {
+    return TestUtil.getProcessOutput("xcrun simctl install booted " + this.getBinaryPath(projectDirectory)).then(() => { return null; });
+  }
+
+  /**
+   * Maps project directories to whether or not they have built an IOS project before.
+   * 
+   * The first build of an IOS project does not always succeed, so we always try again when it fails.
+   *
+   *  EXAMPLE:
+   *  {
+   *      "TEMP_DIR/test-run": true,
+   *      "TEMP_DIR/updates": false
+   *  }
+   */
+  private static iosFirstBuild: any = {};
+
+  /**
+   * Builds the binary of the project on this platform.
+   */
+  buildApp(projectDirectory: string): Q.Promise<void> {
+    const iOSProject: string = path.join(projectDirectory, TestConfig.TestAppName, "ios");
+
+    return this.getEmulatorManager().getTargetEmulator()
       .then((targetEmulator: string) => {
-        return TestUtil.getProcessOutput(
-          "xcodebuild -workspace " +
-            path.join(iOSProject, TestConfig.TestAppName) +
-            ".xcworkspace -scheme " +
-            TestConfig.TestAppName +
-            ' -configuration Release -destination "platform=iOS Simulator,id=' +
-            targetEmulator +
-            '" -derivedDataPath build EXCLUDED_ARCHS=arm64',
-          {
-            cwd: iOSProject,
-            timeout: 30 * 60 * 1000,
-            maxBuffer: 1024 * 1024 * 5000,
-            noLogStdOut: true,
-          }
-        );
+        return TestUtil.getProcessOutput("xcodebuild -workspace " + path.join(iOSProject, TestConfig.TestAppName) + ".xcworkspace -scheme " + TestConfig.TestAppName +
+          " -configuration Release -destination \"platform=iOS Simulator,id=" + targetEmulator + "\" -derivedDataPath build EXCLUDED_ARCHS=arm64", { cwd: iOSProject, timeout: 30 * 60 * 1000, maxBuffer: 1024 * 1024 * 5000, noLogStdOut: true });
       })
       .then<void>(
-        () => {
-          return null;
-        },
+        () => { return null; },
         (error: any) => {
           console.info(error);
           // The first time an iOS project is built, it fails because it does not finish building libReact.a before it builds the test app.
@@ -527,8 +564,7 @@ class RNIOS extends Platform.IOS implements RNPlatform {
             return this.buildApp(projectDirectory);
           }
           return null;
-        }
-      );
+        });
   }
 }
 
@@ -550,20 +586,14 @@ class RNProjectManager extends ProjectManager {
 
   /**
    * Copies over the template files into the specified project, overwriting existing files.
-   *
-   * In Bare React Native App, Codepush configuration is done through native template files.
-   *
-   * In Expo App, the copied native template files will be removed with `npx expo prebuild --clean` command later.
-   * Codepush configuration in native side will be done through expo plugin.
+   * 
+   * In Bare React Native App, Codepush configuration is done through native template files. 
+   * 
+   * In Expo App, the copied native template files will be removed with `npx expo prebuild --clean` command later. 
+   * Codepush configuration in native side will be done through expo plugin. 
    */
-  public copyTemplate(
-    templatePath: string,
-    projectDirectory: string
-  ): Q.Promise<void> {
-    function copyDirectoryRecursively(
-      directoryFrom: string,
-      directoryTo: string
-    ): Q.Promise<void> {
+  public copyTemplate(templatePath: string, projectDirectory: string): Q.Promise<void> {
+    function copyDirectoryRecursively(directoryFrom: string, directoryTo: string): Q.Promise<void> {
       const promises: Q.Promise<void>[] = [];
 
       fs.readdirSync(directoryFrom).forEach((file) => {
@@ -587,10 +617,24 @@ class RNProjectManager extends ProjectManager {
         }
       });
 
-      // Chain promise so that it maintains Q.Promise<void> type instead of Q.Promise<void[]>
-      return Q.all<void>(promises).then(() => {
-        return null;
-      });
+      if (TestConfig.isExpoApp) {
+        return TestUtil.getProcessOutput(`npx create-expo-app@latest ${appName} --template blank`, { cwd: projectDirectory, timeout: 30 * 60 * 1000 })
+          .then((e) => { console.log(`"npx expo init ${appName}" success. cwd=${projectDirectory}`); return e; })
+          .then(this.copyTemplate.bind(this, templatePath, projectDirectory))
+          .then<void>(TestUtil.getProcessOutput.bind(undefined, TestConfig.thisPluginInstallString, { cwd: path.join(projectDirectory, TestConfig.TestAppName) }))
+          .then(TestUtil.getProcessOutput.bind(undefined, `npx expo prebuild --clean`, { cwd: path.join(projectDirectory, TestConfig.TestAppName) }))
+          .then(() => { return null; });
+      } else {
+        return TestUtil.getProcessOutput("npx @react-native-community/cli init " + appName + " --version 0.81.5 --install-pods", { cwd: projectDirectory, timeout: 30 * 60 * 1000 })
+          .then((e) => { console.log(`"npx @react-native-community/cli init ${appName}" success. cwd=${projectDirectory}`); return e; })
+          .then(this.copyTemplate.bind(this, templatePath, projectDirectory))
+          .then<void>(TestUtil.getProcessOutput.bind(undefined, TestConfig.thisPluginInstallString, { cwd: path.join(projectDirectory, TestConfig.TestAppName) }))
+          .then(() => { return null; })
+          .catch((error) => {
+            console.log(`"npx @react-native-community/cli init ${appName} failed". cwd=${projectDirectory}`, error);
+            throw new Error(error);
+          });
+      }
     }
 
     return copyDirectoryRecursively(
@@ -644,39 +688,62 @@ class RNProjectManager extends ProjectManager {
         .then(() => {
           return null;
         });
-    } else {
-      return TestUtil.getProcessOutput(
-        "npx @react-native-community/cli init " +
-          appName +
-          " --version 0.80.1 --install-pods",
-        { cwd: projectDirectory, timeout: 30 * 60 * 1000 }
-      )
-        .then((e) => {
-          console.log(
-            `"npx @react-native-community/cli init ${appName}" success. cwd=${projectDirectory}`
-          );
-          return e;
-        })
-        .then(this.copyTemplate.bind(this, templatePath, projectDirectory))
-        .then<void>(
-          TestUtil.getProcessOutput.bind(
-            undefined,
-            TestConfig.thisPluginInstallString,
-            { cwd: path.join(projectDirectory, TestConfig.TestAppName) }
-          )
-        )
-        .then(() => {
-          return null;
-        })
-        .catch((error) => {
-          console.log(
-            `"npx @react-native-community/cli init ${appName} failed". cwd=${projectDirectory}`,
-            error
-          );
-          throw new Error(error);
-        });
+
+      if (TestConfig.isExpoApp) {
+        // Using react-native bundle instead of expo export because code-push-cli uses react-native-cli to build the app.
+        return deferred.promise
+          .then(TestUtil.getProcessOutput.bind(undefined, "npx expo prebuild --clean", { cwd: path.join(projectDirectory, TestConfig.TestAppName) }))
+          .then(TestUtil.getProcessOutput.bind(undefined, "npx expo customize metro.config.js",
+            { cwd: path.join(projectDirectory, TestConfig.TestAppName) }))
+          .then(TestUtil.getProcessOutput.bind(undefined, "npm install @react-native-community/cli",
+            { cwd: path.join(projectDirectory, TestConfig.TestAppName) }))
+          .then(TestUtil.getProcessOutput.bind(undefined, "npx react-native bundle --entry-file index.js --platform " + targetPlatform.getName() + " --bundle-output " + bundlePath + " --assets-dest " + bundleFolder + " --dev false",
+            { cwd: path.join(projectDirectory, TestConfig.TestAppName) }))
+          .then<string>(TestUtil.archiveFolder.bind(undefined, bundleFolder, "", path.join(projectDirectory, TestConfig.TestAppName, "update.zip"), isDiff));
+      } else {
+        return deferred.promise
+          .then(TestUtil.getProcessOutput.bind(undefined, "npx react-native bundle --entry-file index.js --platform " + targetPlatform.getName() + " --bundle-output " + bundlePath + " --assets-dest " + bundleFolder + " --dev false",
+            { cwd: path.join(projectDirectory, TestConfig.TestAppName) }))
+          .then<string>(TestUtil.archiveFolder.bind(undefined, bundleFolder, "", path.join(projectDirectory, TestConfig.TestAppName, "update.zip"), isDiff));
+      }
     }
+
+    /** JSON file containing the platforms the plugin is currently installed for.
+     *  Keys must match targetPlatform.getName()!
+     *
+     *  EXAMPLE:
+     *  {
+     *      "android": true,
+     *      "ios": false
+     *  }
+     */
+    private static platformsJSON: string = "platforms.json";
+
+  /**
+   * Prepares a specific platform for tests.
+   */
+  public preparePlatform(projectDirectory: string, targetPlatform: Platform.IPlatform): Q.Promise<void> {
+    const deferred = Q.defer<string>();
+
+    const platformsJSONPath = path.join(projectDirectory, RNProjectManager.platformsJSON);
+
+    // We create a JSON file in the project folder to contain the installed platforms.
+    // Check the file to see if the plugin for this platform has been installed and update the file appropriately.
+    fs.exists(platformsJSONPath, (exists) => {
+      if (!exists) {
+        fs.writeFileSync(platformsJSONPath, "{}");
+      }
+
+      const platformJSON = eval("(" + fs.readFileSync(platformsJSONPath, "utf8") + ")");
+      if (platformJSON[targetPlatform.getName()] === true) deferred.reject("Platform " + targetPlatform.getName() + " is already installed in " + projectDirectory + "!");
+      else {
+        platformJSON[targetPlatform.getName()] = true;
+        fs.writeFileSync(platformsJSONPath, JSON.stringify(platformJSON));
+        deferred.resolve(undefined);
+      }
+    });
   }
+}
 
   /** JSON mapping project directories to the current scenario
    *
@@ -702,162 +769,162 @@ class RNProjectManager extends ProjectManager {
    * Sets up the scenario for a test in an already existing project.
    */
   public setupScenario(
-    projectDirectory: string,
-    appId: string,
-    templatePath: string,
-    jsPath: string,
-    targetPlatform: Platform.IPlatform,
-    version?: string
-  ): Q.Promise<void> {
-    // We don't need to anything if it is the current scenario.
-    if (RNProjectManager.currentScenario[projectDirectory] === jsPath)
-      return Q<void>(null);
-    RNProjectManager.currentScenario[projectDirectory] = jsPath;
-    RNProjectManager.currentScenarioHasBuilt[projectDirectory] = false;
+  projectDirectory: string,
+  appId: string,
+  templatePath: string,
+  jsPath: string,
+  targetPlatform: Platform.IPlatform,
+  version ?: string
+): Q.Promise < void> {
+  // We don't need to anything if it is the current scenario.
+  if(RNProjectManager.currentScenario[projectDirectory] === jsPath)
+  return Q<void>(null);
+  RNProjectManager.currentScenario[projectDirectory] = jsPath;
+  RNProjectManager.currentScenarioHasBuilt[projectDirectory] = false;
 
-    const indexHtml = "index.js";
-    const templateIndexPath = path.join(templatePath, indexHtml);
-    const destinationIndexPath = path.join(
-      projectDirectory,
-      TestConfig.TestAppName,
-      indexHtml
+  const indexHtml = "index.js";
+  const templateIndexPath = path.join(templatePath, indexHtml);
+  const destinationIndexPath = path.join(
+    projectDirectory,
+    TestConfig.TestAppName,
+    indexHtml
+  );
+
+  const scenarioJs = "scenarios/" + jsPath;
+
+  console.log("Setting up scenario " + jsPath + " in " + projectDirectory);
+
+  // Copy index html file and replace
+  return TestUtil.copyFile(templateIndexPath, destinationIndexPath, true)
+    .then<void>(
+      TestUtil.replaceString.bind(
+        undefined,
+        destinationIndexPath,
+        TestUtil.CODE_PUSH_TEST_APP_NAME_PLACEHOLDER,
+        TestConfig.TestAppName
+      )
+    )
+    .then<void>(
+      TestUtil.replaceString.bind(
+        undefined,
+        destinationIndexPath,
+        TestUtil.SERVER_URL_PLACEHOLDER,
+        targetPlatform.getServerUrl()
+      )
+    )
+    .then<void>(
+      TestUtil.replaceString.bind(
+        undefined,
+        destinationIndexPath,
+        TestUtil.INDEX_JS_PLACEHOLDER,
+        scenarioJs
+      )
+    )
+    .then<void>(
+      TestUtil.replaceString.bind(
+        undefined,
+        destinationIndexPath,
+        TestUtil.CODE_PUSH_APP_VERSION_PLACEHOLDER,
+        version
+      )
     );
-
-    const scenarioJs = "scenarios/" + jsPath;
-
-    console.log("Setting up scenario " + jsPath + " in " + projectDirectory);
-
-    // Copy index html file and replace
-    return TestUtil.copyFile(templateIndexPath, destinationIndexPath, true)
-      .then<void>(
-        TestUtil.replaceString.bind(
-          undefined,
-          destinationIndexPath,
-          TestUtil.CODE_PUSH_TEST_APP_NAME_PLACEHOLDER,
-          TestConfig.TestAppName
-        )
-      )
-      .then<void>(
-        TestUtil.replaceString.bind(
-          undefined,
-          destinationIndexPath,
-          TestUtil.SERVER_URL_PLACEHOLDER,
-          targetPlatform.getServerUrl()
-        )
-      )
-      .then<void>(
-        TestUtil.replaceString.bind(
-          undefined,
-          destinationIndexPath,
-          TestUtil.INDEX_JS_PLACEHOLDER,
-          scenarioJs
-        )
-      )
-      .then<void>(
-        TestUtil.replaceString.bind(
-          undefined,
-          destinationIndexPath,
-          TestUtil.CODE_PUSH_APP_VERSION_PLACEHOLDER,
-          version
-        )
-      );
-  }
+}
 
   /**
    * Creates a CodePush update package zip for a project.
    */
   public createUpdateArchive(
-    projectDirectory: string,
-    targetPlatform: Platform.IPlatform,
-    isDiff?: boolean
-  ): Q.Promise<string> {
-    const bundleFolder: string = path.join(
-      projectDirectory,
-      TestConfig.TestAppName,
-      "CodePush/"
-    );
-    const bundleName: string = (<RNPlatform>(
-      (<any>targetPlatform)
-    )).getBundleName();
-    const bundlePath: string = path.join(bundleFolder, bundleName);
-    const deferred = Q.defer<string>();
-    fs.exists(bundleFolder, (exists) => {
-      if (exists) del.sync([bundleFolder], { force: true });
-      mkdirp.sync(bundleFolder);
-      deferred.resolve(undefined);
-    });
+  projectDirectory: string,
+  targetPlatform: Platform.IPlatform,
+  isDiff ?: boolean
+): Q.Promise < string > {
+  const bundleFolder: string = path.join(
+    projectDirectory,
+    TestConfig.TestAppName,
+    "CodePush/"
+  );
+  const bundleName: string = (<RNPlatform>(
+    (<any>targetPlatform)
+  )).getBundleName();
+  const bundlePath: string = path.join(bundleFolder, bundleName);
+  const deferred = Q.defer<string>();
+  fs.exists(bundleFolder, (exists) => {
+    if (exists) del.sync([bundleFolder], { force: true });
+    mkdirp.sync(bundleFolder);
+    deferred.resolve(undefined);
+  });
 
-    if (TestConfig.isExpoApp) {
-      // Using react-native bundle instead of expo export because code-push-cli uses react-native-cli to build the app.
-      return deferred.promise
-        .then(
-          TestUtil.getProcessOutput.bind(
-            undefined,
-            "npx expo prebuild --clean",
-            { cwd: path.join(projectDirectory, TestConfig.TestAppName) }
-          )
-        )
-        .then(
-          TestUtil.getProcessOutput.bind(
-            undefined,
-            "npx expo customize metro.config.js",
-            { cwd: path.join(projectDirectory, TestConfig.TestAppName) }
-          )
-        )
-        .then(
-          TestUtil.getProcessOutput.bind(
-            undefined,
-            "npm install @react-native-community/cli",
-            { cwd: path.join(projectDirectory, TestConfig.TestAppName) }
-          )
-        )
-        .then(
-          TestUtil.getProcessOutput.bind(
-            undefined,
-            "npx react-native bundle --entry-file index.js --platform " +
-              targetPlatform.getName() +
-              " --bundle-output " +
-              bundlePath +
-              " --assets-dest " +
-              bundleFolder +
-              " --dev false",
-            { cwd: path.join(projectDirectory, TestConfig.TestAppName) }
-          )
-        )
-        .then<string>(
-          TestUtil.archiveFolder.bind(
-            undefined,
-            bundleFolder,
-            "",
-            path.join(projectDirectory, TestConfig.TestAppName, "update.zip"),
-            isDiff
-          )
-        );
-    } else {
-      return deferred.promise
-        .then(
-          TestUtil.getProcessOutput.bind(
-            undefined,
-            "npx react-native bundle --entry-file index.js --platform " +
-              targetPlatform.getName() +
-              " --bundle-output " +
-              bundlePath +
-              " --assets-dest " +
-              bundleFolder +
-              " --dev false",
-            { cwd: path.join(projectDirectory, TestConfig.TestAppName) }
-          )
-        )
-        .then<string>(
-          TestUtil.archiveFolder.bind(
-            undefined,
-            bundleFolder,
-            "",
-            path.join(projectDirectory, TestConfig.TestAppName, "update.zip"),
-            isDiff
-          )
-        );
-    }
+  if(TestConfig.isExpoApp) {
+  // Using react-native bundle instead of expo export because code-push-cli uses react-native-cli to build the app.
+  return deferred.promise
+    .then(
+      TestUtil.getProcessOutput.bind(
+        undefined,
+        "npx expo prebuild --clean",
+        { cwd: path.join(projectDirectory, TestConfig.TestAppName) }
+      )
+    )
+    .then(
+      TestUtil.getProcessOutput.bind(
+        undefined,
+        "npx expo customize metro.config.js",
+        { cwd: path.join(projectDirectory, TestConfig.TestAppName) }
+      )
+    )
+    .then(
+      TestUtil.getProcessOutput.bind(
+        undefined,
+        "npm install @react-native-community/cli",
+        { cwd: path.join(projectDirectory, TestConfig.TestAppName) }
+      )
+    )
+    .then(
+      TestUtil.getProcessOutput.bind(
+        undefined,
+        "npx react-native bundle --entry-file index.js --platform " +
+        targetPlatform.getName() +
+        " --bundle-output " +
+        bundlePath +
+        " --assets-dest " +
+        bundleFolder +
+        " --dev false",
+        { cwd: path.join(projectDirectory, TestConfig.TestAppName) }
+      )
+    )
+    .then<string>(
+      TestUtil.archiveFolder.bind(
+        undefined,
+        bundleFolder,
+        "",
+        path.join(projectDirectory, TestConfig.TestAppName, "update.zip"),
+        isDiff
+      )
+    );
+} else {
+  return deferred.promise
+    .then(
+      TestUtil.getProcessOutput.bind(
+        undefined,
+        "npx react-native bundle --entry-file index.js --platform " +
+        targetPlatform.getName() +
+        " --bundle-output " +
+        bundlePath +
+        " --assets-dest " +
+        bundleFolder +
+        " --dev false",
+        { cwd: path.join(projectDirectory, TestConfig.TestAppName) }
+      )
+    )
+    .then<string>(
+      TestUtil.archiveFolder.bind(
+        undefined,
+        bundleFolder,
+        "",
+        path.join(projectDirectory, TestConfig.TestAppName, "update.zip"),
+        isDiff
+      )
+    );
+}
   }
 
   /** JSON file containing the platforms the plugin is currently installed for.
@@ -875,107 +942,107 @@ class RNProjectManager extends ProjectManager {
    * Prepares a specific platform for tests.
    */
   public preparePlatform(
-    projectDirectory: string,
-    targetPlatform: Platform.IPlatform
-  ): Q.Promise<void> {
-    const deferred = Q.defer<string>();
+  projectDirectory: string,
+  targetPlatform: Platform.IPlatform
+): Q.Promise < void> {
+  const deferred = Q.defer<string>();
 
-    const platformsJSONPath = path.join(
-      projectDirectory,
-      RNProjectManager.platformsJSON
+  const platformsJSONPath = path.join(
+    projectDirectory,
+    RNProjectManager.platformsJSON
+  );
+
+  // We create a JSON file in the project folder to contain the installed platforms.
+  // Check the file to see if the plugin for this platform has been installed and update the file appropriately.
+  fs.exists(platformsJSONPath, (exists) => {
+    if (!exists) {
+      fs.writeFileSync(platformsJSONPath, "{}");
+    }
+
+    const platformJSON = eval(
+      "(" + fs.readFileSync(platformsJSONPath, "utf8") + ")"
     );
-
-    // We create a JSON file in the project folder to contain the installed platforms.
-    // Check the file to see if the plugin for this platform has been installed and update the file appropriately.
-    fs.exists(platformsJSONPath, (exists) => {
-      if (!exists) {
-        fs.writeFileSync(platformsJSONPath, "{}");
-      }
-
-      const platformJSON = eval(
-        "(" + fs.readFileSync(platformsJSONPath, "utf8") + ")"
+    if (platformJSON[targetPlatform.getName()] === true)
+      deferred.reject(
+        "Platform " +
+        targetPlatform.getName() +
+        " is already installed in " +
+        projectDirectory +
+        "!"
       );
-      if (platformJSON[targetPlatform.getName()] === true)
-        deferred.reject(
-          "Platform " +
-            targetPlatform.getName() +
-            " is already installed in " +
-            projectDirectory +
-            "!"
-        );
-      else {
-        platformJSON[targetPlatform.getName()] = true;
-        fs.writeFileSync(platformsJSONPath, JSON.stringify(platformJSON));
-        deferred.resolve(undefined);
-      }
-    });
+    else {
+      platformJSON[targetPlatform.getName()] = true;
+      fs.writeFileSync(platformsJSONPath, JSON.stringify(platformJSON));
+      deferred.resolve(undefined);
+    }
+  });
 
-    return deferred.promise.then<void>(
-      () => {
-        return (<RNPlatform>(<any>targetPlatform)).installPlatform(
-          projectDirectory
-        );
-      },
-      (error: any) => {
+  return deferred.promise.then<void>(
+    () => {
+      return (<RNPlatform>(<any>targetPlatform)).installPlatform(
+        projectDirectory
+      );
+    },
+    (error: any) => {
         /* The platform is already installed! */ console.log(error);
-        return null;
-      }
-    );
-  }
+      return null;
+    }
+  );
+}
 
   /**
    * Cleans up a specific platform after tests.
    */
   public cleanupAfterPlatform(
-    projectDirectory: string,
-    targetPlatform: Platform.IPlatform
-  ): Q.Promise<void> {
-    // Can't uninstall from command line, so noop.
-    return Q<void>(null);
-  }
+  projectDirectory: string,
+  targetPlatform: Platform.IPlatform
+): Q.Promise < void> {
+  // Can't uninstall from command line, so noop.
+  return Q<void>(null);
+}
 
   /**
    * Runs the test app on the given target / platform.
    */
   public runApplication(
-    projectDirectory: string,
-    targetPlatform: Platform.IPlatform
-  ): Q.Promise<void> {
-    console.log(
-      "Running project in " +
-        projectDirectory +
-        " on " +
-        targetPlatform.getName()
-    );
+  projectDirectory: string,
+  targetPlatform: Platform.IPlatform
+): Q.Promise < void> {
+  console.log(
+    "Running project in " +
+    projectDirectory +
+    " on " +
+    targetPlatform.getName()
+  );
 
-    return Q<void>(null)
-      .then(() => {
-        // Build if this scenario has not yet been built.
-        if (!RNProjectManager.currentScenarioHasBuilt[projectDirectory]) {
-          RNProjectManager.currentScenarioHasBuilt[projectDirectory] = true;
-          return (<RNPlatform>(<any>targetPlatform)).buildApp(projectDirectory);
-        }
-      })
-      .then(() => {
-        // Uninstall the app so that the installation is clean and no files are left around for each test.
-        return targetPlatform
-          .getEmulatorManager()
-          .uninstallApplication(TestConfig.TestNamespace);
-      })
-      .then(() => {
-        // Install and launch the app.
-        return (<RNPlatform>(<any>targetPlatform))
-          .installApp(projectDirectory)
-          .then<void>(
-            targetPlatform
-              .getEmulatorManager()
-              .launchInstalledApplication.bind(
-                undefined,
-                TestConfig.TestNamespace
-              )
-          );
-      });
-  }
+  return Q<void>(null)
+    .then(() => {
+      // Build if this scenario has not yet been built.
+      if (!RNProjectManager.currentScenarioHasBuilt[projectDirectory]) {
+        RNProjectManager.currentScenarioHasBuilt[projectDirectory] = true;
+        return (<RNPlatform>(<any>targetPlatform)).buildApp(projectDirectory);
+      }
+    })
+    .then(() => {
+      // Uninstall the app so that the installation is clean and no files are left around for each test.
+      return targetPlatform
+        .getEmulatorManager()
+        .uninstallApplication(TestConfig.TestNamespace);
+    })
+    .then(() => {
+      // Install and launch the app.
+      return (<RNPlatform>(<any>targetPlatform))
+        .installApp(projectDirectory)
+        .then<void>(
+          targetPlatform
+            .getEmulatorManager()
+            .launchInstalledApplication.bind(
+              undefined,
+              TestConfig.TestNamespace
+            )
+        );
+    });
+}
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1859,7 +1926,7 @@ PluginTestingFramework.initializeTests(
                 /* restart the application */
                 console.log(
                   "Update hash: " +
-                    ServerUtil.updateResponse.update_info.package_hash
+                  ServerUtil.updateResponse.update_info.package_hash
                 );
                 targetPlatform
                   .getEmulatorManager()
@@ -1872,7 +1939,7 @@ PluginTestingFramework.initializeTests(
                 /* restart the application */
                 console.log(
                   "Update hash: " +
-                    ServerUtil.updateResponse.update_info.package_hash
+                  ServerUtil.updateResponse.update_info.package_hash
                 );
                 targetPlatform
                   .getEmulatorManager()
