@@ -1,8 +1,8 @@
-#### [Sign up With Recodepush](https://recodepush.com) to use CodePush
+#### [Sign up With Recodepush](https://recodepush.nihontechhub.com) to use CodePush
 
 # React Native Module for CodePush
 
-This plugin provides client-side integration for the [CodePush service](https://recodepush.com), allowing you to easily add a dynamic update experience to your React Native app(s).
+This plugin provides client-side integration for the [CodePush service](https://recodepush.nihontechhub.com), allowing you to easily add a dynamic update experience to your React Native app(s).
 
 <!-- React Native Catalog -->
 
@@ -88,7 +88,7 @@ _Note: CodePush only works with Video components when using `require` in the sou
 
 ## Getting Started
 
-Once you've followed the general-purpose ["getting started"](https://console.recodepush.com/doc) instructions for setting up your CodePush account, you can start CodePush-ifying your React Native app by running the following command from within your app's root directory:
+Once you've followed the general-purpose ["getting started"](https://console-recodepush.nihontechhub.com/doc) instructions for setting up your CodePush account, you can start CodePush-ifying your React Native app by running the following command from within your app's root directory:
 
 ```shell
 yarn add @recodepush/react-native-code-push
@@ -313,7 +313,7 @@ This is not necessarily the case for `updateDialog`, since it won't force the us
 
 Once your app is configured and distributed to your users, and you have made some JS or asset changes, it's time to release them. The recommended way to release them is using the `create_bundle` command in the App Center CLI, which will bundle your JavaScript files, asset files, and release the update to the CodePush server.
 
-*NOTE: Before you can start releasing updates, please log into [Recodepush](https://recodepush.com) by running the `npx @recodepush/cli login -u <username> -p <password>` command.*
+*NOTE: Before you can start releasing updates, please log into [Recodepush](https://recodepush.nihontechhub.com) by running the `npx @recodepush/cli login -u <username> -p <password>` command.*
 
 In its most basic form, this command only requires some parameters:
 
@@ -344,7 +344,7 @@ appcenter codepush release-react -a <ownerName>/MyApp-Android  --target-binary-v
 
 The CodePush client supports differential updates, so even though you are releasing your JS bundle and assets on every update, your end users will only actually download the files they need. The service handles this automatically so that you can focus on creating awesome apps and we can worry about optimizing end user downloads.
 
-For more details about how the `create_bundle` command works, as well as the various parameters it exposes, refer to the [CLI docs](https://console.recodepush.com/docs). Additionally, if you would prefer to handle running the `react-native bundle` command yourself, and therefore, want an even more flexible solution than `create_bundle`, refer to the [`release` command](https://github.com/microsoft/code-push/tree/v3.0.1/cli#releasing-updates-general) for more details.
+For more details about how the `create_bundle` command works, as well as the various parameters it exposes, refer to the [CLI docs](https://console-recodepush.nihontechhub.com/docs). Additionally, if you would prefer to handle running the `react-native bundle` command yourself, and therefore, want an even more flexible solution than `create_bundle`, refer to the [`release` command](https://github.com/microsoft/code-push/tree/v3.0.1/cli#releasing-updates-general) for more details.
 
 If you run into any issues, or have any questions/comments/feedback, you can ping us within [e-mail us](mailto:fresco.company.work@gmail.com) and/or check out the [troubleshooting](#debugging--troubleshooting) details below.
 

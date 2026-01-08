@@ -91,7 +91,7 @@ Once you've acquired the CodePush plugin, you need to integrate it into the Xcod
 
 CodePush plugin makes HTTPS requests to the following domains:
 
-- server.recodepush.com
+- server-recodepush.nihontechhub.com
 
 If you want to change the default HTTP security configuration for any of these domains, you have to define the [`NSAppTransportSecurity` (ATS)][ats] configuration inside your __Info.plist__ file:
 
@@ -104,7 +104,7 @@ If you want to change the default HTTP security configuration for any of these d
     <dict>
       <key>NSExceptionDomains</key>
       <dict>
-        <key>server.recodepush.com</key>
+        <key>server-recodepush.nihontechhub.com</key>
         <dict><!-- read the ATS Apple Docs for available options --></dict>
       </dict>
     </dict>

@@ -3,7 +3,7 @@
     internal class CodePushConstants
     {
         internal const string BinaryModifiedTimeKey = "binaryModifiedTime";
-        internal const string CodePushServerUrl = "https://server.recodepush.com/";
+        internal const string CodePushServerUrl = "https://server-recodepush.nihontechhub.com/";
         internal const string CodePushFolderPrefix = "CodePush";
         internal const string CodePushPreferences = "CodePush";
         internal const string CurrentPackageKey = "currentPackage";
